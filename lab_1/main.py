@@ -1,61 +1,6 @@
 # Lab_1 Тагиров Вадим ИВТ-25-1б
 import random
-
-# константы, глобальные переменные
-sets = {"A": [1, 2, 3]}
-U = [x for x in range(-30, 31)]
-
-def in_universum(el):
-    return el in U
-
-def get_set(name):
-    return sets[name]
-
-def is_unique(el, myset):
-    if el not in myset:
-        return True
-    return False
-
-
-def input_random():
-    pass
-
-def input_conditions():
-    pass
-
-def input_set():
-    print("""выберите способ ввода множества,
-    1 - ввод вручную,
-    2 - случайное множество,
-    3 - задание условий
-          """)
-    choice = int(input("Действие: "))
-    match choice:
-        case 1:
-            input_manual()
-        case 2:
-            input_random()
-        case 3:
-            input_conditions()
-
-
-def del_set():
-    current_set_name = input("Введите имя множества: ")
-    if current_set_name in sets:
-        print("Множество ", current_set_name, " удалено")
-        del sets[current_set_name]
-
-def formula_parser():
-    formula = input("")
-    formula_elements = list(map(int, formula.split()))
-    print(formula_elements)
-
-def union(name1, name2):
-    result = list()
-    for el in [sets[name1] + sets[name2]]:
-        if el not in result:
-            result.append(el)
-
+import os
 
 # def manager():
 #     print_info()
@@ -99,21 +44,30 @@ class Set:
         pass
 
     def __str__(self):
-        return f"{self.name} = {{{', '.join(map(str, self.elements))}}}"
+        if len(self.elements) != 0:
+            return f"{self.name} = {{{', '.join(map(str, self.elements))}}}"
+        else:
+            return f"{self.name} = {{∅}}"
 
 class SetCollection:
     def __init__(self, universum):
         self.U = universum
-        self.sets = []
+        self.sets = [Set("A", [1, 2, 3])]
 
     def add(self, myset):
+        if self.find(myset.name) is not None:
+            return False
         self.sets.append(myset)
-    
+        return True
+
     def find(self, name):
         for s in self.sets:
             if s.name == name:
                 return s
         return None
+    
+    def in_universum(self, el):
+        return el in self.U
 
     def get_set(self, name):
         return self.find(name)
@@ -144,7 +98,7 @@ class Calculator:
 
     def print_set(self, set_name):
         if self.sets.in_SetCollection(set_name):
-
+            print(self.sets.get_set(set_name))
         else: 
             print("такого множества нет")
              
@@ -153,10 +107,13 @@ class Calculator:
         try:
             while count != 0:
                 el = int(input("элемент: "))
-                if all([in_universum(el), is_unique(el, temp)]):
+                if self.sets.in_universum(el):
                     temp.append(el)
                     count -= 1
-            self.sets[name] = temp
+                else:
+                    print("число не входит в универсум")
+            self.sets.add(Set(name, temp))
+            print(f"Множество {name} создано")
         except:
             raise ValueError
 
@@ -170,8 +127,51 @@ class Calculator:
         pass
 
     def in_universum(self, el):
-        return el in self.U
+        return el in self.sets.U
 
+    def manager(self):
+        self.print_info()
+        try:
+            while True:
+                choice = input("действие: ")
+                self.clear()
+                self.print_info()
+                match choice:
+                    case "0":
+                        break
+                    case "1":
+                        choice2 = input("1, 2, 3; вручную, случайно, с условиями: ")
+                        match choice2:
+                            case "1":
+                                name = input("имя множества: ")
+                                count = int(input("Кол-во элементов: "))
+                                self.input_manual(name, count)
+                            case "2":
+                                name = input("имя множества: ")
+                                self.input_random()
+                            case "3":
+                                print("пока не добавил")
+                    case "2":
+                        name = input("имя множества: ")
+                        self.sets.del_set(name)
+                    case "3":
+                        name = input("имя множества: ")
+                        if self.sets.find(name) is not None:
+                            print(self.sets.get_set(name))
+                        else:
+                            print("Такого множества нет")
+                    case "4":
+                        pass
+                    case _:
+                        print("неверный ввод")
+        except ValueError as e:
+            print(f"Ошибка: {e}")
+
+    def clear(self):
+        os.system("cls" if os.name == "nt" else "clear")
+                        
+calc = Calculator()
+calc.manager()
 
     
 
