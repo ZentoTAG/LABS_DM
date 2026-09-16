@@ -2,37 +2,25 @@
 import random
 import os
 
-# def manager():
-#     print_info()
-#     while True:
-#         try:
-#             choice = int(input("выбор: "))
-#             match choice:
-#                 case 0:
-#                     break
-#                 case 1:
-#                     input_set()
-#                 case 2:
-#                     del_set()
-#                 case 3:
-#                     print_set()
-#                 case 4:
-#                     formula_parser()
-#                  
-#         except:
-#              print("где то ошибка")
-#
-
 class Set:
     def __init__(self, name, elements):
         self.name = name
         self.elements = elements
 
     def union(self, other):
-        pass
+        result = self.elements
+        for el in other.elements:
+            if el not in result:
+                result.append(el)
+        return result
 
     def intersect(self, other):
-        pass
+        result = list()
+        temp = self.elements + other.elements
+        for el in temp:
+            if el not in result:
+                result.append(el)
+        return result
 
     def diff(self, other):
         pass
@@ -40,7 +28,7 @@ class Set:
     def sym_diff(self, other):
         pass
 
-    def complement(self, other):
+    def complement(self, universum):
         pass
 
     def __str__(self):
@@ -48,6 +36,7 @@ class Set:
             return f"{self.name} = {{{', '.join(map(str, self.elements))}}}"
         else:
             return f"{self.name} = {{∅}}"
+
 
 class SetCollection:
     def __init__(self, universum):
@@ -81,6 +70,7 @@ class SetCollection:
 
     def in_SetCollection(self, name):
         return self.find(name) is not None
+
  
 class Calculator:
     def __init__(self):
@@ -164,6 +154,7 @@ class Calculator:
                         pass
                     case _:
                         print("неверный ввод")
+                # input("нажмите энтер для продолжения")
         except ValueError as e:
             print(f"Ошибка: {e}")
 
