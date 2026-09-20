@@ -2,34 +2,56 @@
 import random
 import os
 
+
+def format_set(elements):
+    if not elements:
+        return "{∅}"
+    return "{" + ", ".join(map(str, elements)) + "}"
+    
 class Set:
     def __init__(self, name, elements):
         self.name = name
         self.elements = elements
 
     def union(self, other):
-        result = self.elements
+        result = self.elements.copy()
         for el in other.elements:
             if el not in result:
                 result.append(el)
         return result
 
     def intersect(self, other):
-        result = list()
-        temp = self.elements + other.elements
-        for el in temp:
-            if el not in result:
+        result = []
+        for el in self.elements:
+            if el in other.elements and el not in result:
                 result.append(el)
         return result
 
     def diff(self, other):
-        pass
+        result = []
+        for el in self.elements:
+            if el not in other.elements and el not in result:
+                result.append(el)
+        return result
 
     def sym_diff(self, other):
-        pass
+        result = []
+        for el in self.elements:
+            if el not in other.elements and el not in result:
+                result.append(el)
+        for el in other.elements:
+            if el not in self.elements and el not in result:
+                result.append(el)
+        return result
 
     def complement(self, universum):
-        pass
+        result = list()
+        for el in universum:
+            if el in self.elements:
+                continue
+            else:
+                result.append(el)
+        return result
 
     def __str__(self):
         if len(self.elements) != 0:
@@ -41,7 +63,8 @@ class Set:
 class SetCollection:
     def __init__(self, universum):
         self.U = universum
-        self.sets = [Set("A", [1, 2, 3])]
+        self.sets = []
+        self.operators = (("+"))
 
     def add(self, myset):
         if self.find(myset.name) is not None:
@@ -54,7 +77,14 @@ class SetCollection:
             if s.name == name:
                 return s
         return None
-    
+
+    def complement(self, name):
+        s = self.find(name)
+        if s is None:
+            return None
+        result = [x for x in self.U if x not in s.elements]
+        return Set(f"¬{name}", result)
+
     def in_universum(self, el):
         return el in self.U
 
@@ -97,19 +127,30 @@ class Calculator:
         try:
             while count != 0:
                 el = int(input("элемент: "))
-                if self.sets.in_universum(el):
+                if self.sets.in_universum(el) and el not in temp:
                     temp.append(el)
                     count -= 1
                 else:
-                    print("число не входит в универсум")
+                    print("Число вне универсума или уже есть")
             self.sets.add(Set(name, temp))
             print(f"Множество {name} создано")
         except:
             raise ValueError
 
-    def input_random(self):
-        pass
-
+    def input_random(self, name, count):
+        temp = list()
+        U_copy = self.sets.U.copy()
+        try:
+            while count != 0:
+                el = random.choice(self.sets.U)
+                if self.sets.in_universum(el):
+                    temp.append(el)
+                    count -= 1 
+            self.sets.add(Set(name, temp))
+            print(f"Множество {name} создано")
+        except:
+            print("где-то ошибка")
+                
     def input_conditions(self):
         pass
     
@@ -119,6 +160,108 @@ class Calculator:
     def in_universum(self, el):
         return el in self.sets.U
 
+    def formula_parser(self, formula):
+        formula = formula.replace(" ", "")
+
+        save = False
+        if "=" in formula:
+            parts = formula.split("=", 1)
+            left = parts[0]
+            formula = parts[1]
+            save = True
+
+        result = self.evaluate(formula)
+        if result is None:
+            print("Ошибка в формуле")
+            return
+
+        for s in self.sets.sets[:]:
+            if s.name.startswith("_temp_"):
+                self.sets.sets.remove(s)
+
+        if save:
+            self.sets.del_set(left)
+            self.sets.add(Set(left, result.elements))
+            print(f"{left} = {format_set(result.elements)}")
+        else:
+            print(f"{format_set(result.elements)}")
+
+    def evaluate(self, formula):
+        formula = formula.replace(" ", "")
+
+        while "(" in formula:
+            start = formula.rfind("(")
+            end = formula.find(")", start)
+            if end == -1:
+                print("Незакрытая скобка")
+                return None
+
+            inner = formula[start + 1:end]
+            inner_result = self.evaluate(inner)
+            if inner_result is None:
+                return None
+
+            temp_name = f"_temp_{start}"
+            self.sets.add(Set(temp_name, inner_result.elements))
+            formula = formula[:start] + temp_name + formula[end + 1:]
+
+        tokens = []
+        i = 0
+        while i < len(formula):
+            if formula[i] in "+-*^!":
+                tokens.append(formula[i])
+                i += 1
+            else:
+                j = i
+                while j < len(formula) and formula[j] not in "+-*^!":
+                    j += 1
+                tokens.append(formula[i:j])
+                i = j
+
+        if not tokens:
+            print("Пустая формула")
+            return None
+
+        if tokens[0] == "!":
+            name = tokens[1]
+            result = self.sets.complement(name)
+            if result is None:
+                print(f"Множество {name} не найдено")
+                return None
+            print(f"!{name} = {result.elements}")
+            i = 2
+        else:
+            result = self.sets.get_set(tokens[0])
+            if result is None:
+                print(f"Множество {tokens[0]} не найдено")
+                return None
+            i = 1
+
+        while i < len(tokens):
+            op = tokens[i]
+            name = tokens[i + 1]
+            other = self.sets.get_set(name)
+            if other is None:
+                print(f"Множество {name} не найдено")
+                return None
+
+            old = result.elements.copy()
+
+            if op == "+":
+                result = Set("temp", result.union(other))
+            elif op == "*":
+                result = Set("temp", result.intersect(other))
+            elif op == "-":
+                result = Set("temp", result.diff(other))
+            elif op == "^":
+                result = Set("temp", result.sym_diff(other))
+
+            print(f"{old} {op} {other.elements} = {result.elements}")
+
+            i += 2
+
+        return result
+        
     def manager(self):
         self.print_info()
         try:
@@ -138,7 +281,8 @@ class Calculator:
                                 self.input_manual(name, count)
                             case "2":
                                 name = input("имя множества: ")
-                                self.input_random()
+                                count = int(input("кол-во элементов: "))
+                                self.input_random(name, count)
                             case "3":
                                 print("пока не добавил")
                     case "2":
@@ -151,7 +295,8 @@ class Calculator:
                         else:
                             print("Такого множества нет")
                     case "4":
-                        pass
+                        name = input("формула: ")
+                        self.formula_parser(name)
                     case _:
                         print("неверный ввод")
                 # input("нажмите энтер для продолжения")
