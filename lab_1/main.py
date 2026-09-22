@@ -44,15 +44,6 @@ class Set:
                 result.append(el)
         return result
 
-    def complement(self, universum):
-        result = list()
-        for el in universum:
-            if el in self.elements:
-                continue
-            else:
-                result.append(el)
-        return result
-
     def __str__(self):
         if len(self.elements) != 0:
             return f"{self.name} = {{{', '.join(map(str, self.elements))}}}"
@@ -132,7 +123,7 @@ class Calculator:
                     count -= 1
                 else:
                     print("Число вне универсума или уже есть")
-            self.sets.add(Set(name, temp))
+            self.sets.add(Set(name, sorted(temp)))
             print(f"Множество {name} создано")
         except:
             raise ValueError
@@ -146,13 +137,33 @@ class Calculator:
                 if self.sets.in_universum(el):
                     temp.append(el)
                     count -= 1 
-            self.sets.add(Set(name, temp))
+            self.sets.add(Set(name, sorted(temp)))
             print(f"Множество {name} создано")
         except:
             print("где-то ошибка")
                 
-    def input_conditions(self):
-        pass
+    def input_conditions(self, name, condition):
+        temp = list()
+        U_copy = self.sets.U.copy()
+        try:
+            if "нечёт" in condition:
+                temp = [x for x in U_copy if x % 2 != 0]
+            elif "чёт" in condition: 
+                temp = [x for x in U_copy if x % 2 == 0]
+            if "неотриц" in condition:
+                temp = [x for x in U_copy if x >= 0]
+            elif "отриц" in condition:
+                temp = [x for x in U_copy if x < 0]
+            if "кратн" in condition:
+                choice = input("кратно: ")
+                temp = [x for x in U_copy if x % int(choice) == 0]
+            if "диап" in condition:
+                x, y = list(map(int, input("диап в виде x y: ").split()))
+                temp = [el for el in range(x, y+1) if self.sets.in_universum(el)]
+            self.sets.add(name, sorted(temp))
+            print(f"Множество {name} создано")
+        except:
+            raise ValueError("ошибка ввода значения")
     
     def input_set(self, choice):
         pass
@@ -284,7 +295,9 @@ class Calculator:
                                 count = int(input("кол-во элементов: "))
                                 self.input_random(name, count)
                             case "3":
-                                print("пока не добавил")
+                                name = input("имя множества: ")
+                                condition = input("условие: ")
+                                self.input_conditions(name, condition)
                     case "2":
                         name = input("имя множества: ")
                         self.sets.del_set(name)
