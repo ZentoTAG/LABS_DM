@@ -143,28 +143,27 @@ class Calculator:
             print("где-то ошибка")
                 
     def input_conditions(self, name, condition):
-        temp = list()
-        U_copy = self.sets.U.copy()
-        try:
-            if "нечёт" in condition:
-                temp = [x for x in U_copy if x % 2 != 0]
-            elif "чёт" in condition: 
-                temp = [x for x in U_copy if x % 2 == 0]
-            if "неотриц" in condition:
-                temp = [x for x in U_copy if x >= 0]
-            elif "отриц" in condition:
-                temp = [x for x in U_copy if x < 0]
-            if "кратн" in condition:
-                choice = input("кратно: ")
-                temp = [x for x in U_copy if x % int(choice) == 0]
-            if "диап" in condition:
-                x, y = list(map(int, input("диап в виде x y: ").split()))
-                temp = [el for el in range(x, y+1) if self.sets.in_universum(el)]
-            self.sets.add(name, sorted(temp))
-            print(f"Множество {name} создано")
-        except:
-            raise ValueError("ошибка ввода значения")
-    
+        temp = self.sets.U.copy()
+        if "нечёт" in condition:
+            temp = [x for x in temp if x % 2 != 0]
+        elif "чёт" in condition:
+            temp = [x for x in temp if x % 2 == 0]
+        
+        if "неотриц" in condition:
+            temp = [x for x in temp if x >= 0]
+        elif "отриц" in condition:
+            temp = [x for x in temp if x < 0]
+        
+        if "кратн" in condition:
+            n = int(input("кратно: "))
+            temp = [x for x in temp if x % n == 0]
+        
+        if "диап" in condition:
+            x, y = list(map(int, input("диап в виде x y: ").split()))
+            temp = [el for el in temp if x <= el <= y]
+        
+        self.sets.add(Set(name, sorted(temp)))
+        print(f"Множество {name} создано: {format_set(temp)}")   
     def input_set(self, choice):
         pass
 
@@ -239,7 +238,7 @@ class Calculator:
             if result is None:
                 print(f"Множество {name} не найдено")
                 return None
-            print(f"!{name} = {result.elements}")
+            print(f"!{name} = {format_set(result.elements)}")
             i = 2
         else:
             result = self.sets.get_set(tokens[0])
@@ -267,8 +266,7 @@ class Calculator:
             elif op == "^":
                 result = Set("temp", result.sym_diff(other))
 
-            print(f"{old} {op} {other.elements} = {result.elements}")
-
+            print(f"{format_set(old)} {op} {format_set(other.elements)} = {format_set(result.elements)}")
             i += 2
 
         return result
@@ -296,6 +294,13 @@ class Calculator:
                                 self.input_random(name, count)
                             case "3":
                                 name = input("имя множества: ")
+                                print("""
+                    доступны условия:
+                                  нечёт/чёт
+                                  отриц/неотриц
+                                  кратн
+                                  диап
+                                  """) 
                                 condition = input("условие: ")
                                 self.input_conditions(name, condition)
                     case "2":
