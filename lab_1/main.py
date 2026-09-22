@@ -7,7 +7,8 @@ def format_set(elements):
     if not elements:
         return "{∅}"
     return "{" + ", ".join(map(str, elements)) + "}"
-    
+
+
 class Set:
     def __init__(self, name, elements):
         self.name = name
@@ -69,16 +70,6 @@ class SetCollection:
                 return s
         return None
 
-    def complement(self, name):
-        s = self.find(name)
-        if s is None:
-            return None
-        result = [x for x in self.U if x not in s.elements]
-        return Set(f"¬{name}", result)
-
-    def in_universum(self, el):
-        return el in self.U
-
     def get_set(self, name):
         return self.find(name)
 
@@ -92,27 +83,83 @@ class SetCollection:
     def in_SetCollection(self, name):
         return self.find(name) is not None
 
- 
+    def in_universum(self, el):
+        return el in self.U
+
+    def complement(self, name):
+        s = self.find(name)
+        if s is None:
+            return None
+        result = [x for x in self.U if x not in s.elements]
+        return Set(f"¬{name}", result)
+
+
 class Calculator:
     def __init__(self):
         self.sets = SetCollection(list(range(-30, 31)))
 
-    def print_info(self):
-        print(
-"""Это мой калькулятор производных, введите цифру для выбора действия
-0 - завершить пограмму
-1 - создать и ввести множество
-2 - удалить множество
-3 - вывести множество
-4 - ввод математической формулы
-    """)
+    def manager(self):
+        while True:
+            self.clear()
+            self.print_info()
+            choice = input("действие: ")
+            match choice:
+                case "0":
+                    break
+                case "1":
+                    self.create_set()
+                case "2":
+                    self.delete_set()
+                case "3":
+                    self.show_set()
+                case "4":
+                    self.formula()
+                case _:
+                    print("неверный ввод")
 
-    def print_set(self, set_name):
-        if self.sets.in_SetCollection(set_name):
-            print(self.sets.get_set(set_name))
-        else: 
-            print("такого множества нет")
-             
+    def create_set(self):
+        choice = input("1 - вручную, 2 - случайно, 3 - по условиям: ")
+        name = input("имя множества: ")
+        match choice:
+            case "1":
+                count = int(input("Кол-во элементов: "))
+                self.input_manual(name, count)
+            case "2":
+                count = int(input("Кол-во элементов: "))
+                self.input_random(name, count)
+            case "3":
+                print("""
+доступны условия:
+  нечёт/чёт
+  отриц/неотриц
+  кратн
+  диап
+""")
+                condition = input("условие: ")
+                self.input_conditions(name, condition)
+                input()
+            case _:
+                print("неверный ввод")
+
+    def delete_set(self):
+        name = input("имя множества: ")
+        if self.sets.del_set(name):
+            print(f"Множество {name} удалено")
+        else:
+            print("Такого множества нет")
+
+    def show_set(self):
+        name = input("имя множества: ")
+        s = self.sets.get_set(name)
+        if s is not None:
+            print(s)
+        else:
+            print("Такого множества нет")
+
+    def formula(self):
+        formula = input("формула: ")
+        self.formula_parser(formula)
+
     def input_manual(self, name, count):
         temp = list()
         try:
@@ -136,39 +183,34 @@ class Calculator:
                 el = random.choice(self.sets.U)
                 if self.sets.in_universum(el):
                     temp.append(el)
-                    count -= 1 
+                    count -= 1
             self.sets.add(Set(name, sorted(temp)))
             print(f"Множество {name} создано")
         except:
             print("где-то ошибка")
-                
+
     def input_conditions(self, name, condition):
         temp = self.sets.U.copy()
         if "нечёт" in condition:
             temp = [x for x in temp if x % 2 != 0]
         elif "чёт" in condition:
             temp = [x for x in temp if x % 2 == 0]
-        
+
         if "неотриц" in condition:
             temp = [x for x in temp if x >= 0]
         elif "отриц" in condition:
             temp = [x for x in temp if x < 0]
-        
+
         if "кратн" in condition:
             n = int(input("кратно: "))
             temp = [x for x in temp if x % n == 0]
-        
+
         if "диап" in condition:
             x, y = list(map(int, input("диап в виде x y: ").split()))
             temp = [el for el in temp if x <= el <= y]
-        
-        self.sets.add(Set(name, sorted(temp)))
-        print(f"Множество {name} создано: {format_set(temp)}")   
-    def input_set(self, choice):
-        pass
 
-    def in_universum(self, el):
-        return el in self.sets.U
+        self.sets.add(Set(name, sorted(temp)))
+        print(f"Множество {name} создано: {format_set(temp)}")
 
     def formula_parser(self, formula):
         formula = formula.replace(" ", "")
@@ -270,64 +312,20 @@ class Calculator:
             i += 2
 
         return result
-        
-    def manager(self):
-        self.print_info()
-        try:
-            while True:
-                choice = input("действие: ")
-                self.clear()
-                self.print_info()
-                match choice:
-                    case "0":
-                        break
-                    case "1":
-                        choice2 = input("1, 2, 3; вручную, случайно, с условиями: ")
-                        match choice2:
-                            case "1":
-                                name = input("имя множества: ")
-                                count = int(input("Кол-во элементов: "))
-                                self.input_manual(name, count)
-                            case "2":
-                                name = input("имя множества: ")
-                                count = int(input("кол-во элементов: "))
-                                self.input_random(name, count)
-                            case "3":
-                                name = input("имя множества: ")
-                                print("""
-                    доступны условия:
-                                  нечёт/чёт
-                                  отриц/неотриц
-                                  кратн
-                                  диап
-                                  """) 
-                                condition = input("условие: ")
-                                self.input_conditions(name, condition)
-                    case "2":
-                        name = input("имя множества: ")
-                        self.sets.del_set(name)
-                    case "3":
-                        name = input("имя множества: ")
-                        if self.sets.find(name) is not None:
-                            print(self.sets.get_set(name))
-                        else:
-                            print("Такого множества нет")
-                    case "4":
-                        name = input("формула: ")
-                        self.formula_parser(name)
-                    case _:
-                        print("неверный ввод")
-                # input("нажмите энтер для продолжения")
-        except ValueError as e:
-            print(f"Ошибка: {e}")
+
+    def print_info(self):
+        print(
+"""Это мой калькулятор множеств, введите цифру для выбора действия
+0 - завершить программу
+1 - создать и ввести множество
+2 - удалить множество
+3 - вывести множество
+4 - ввод математической формулы
+    """)
 
     def clear(self):
         os.system("cls" if os.name == "nt" else "clear")
-                        
+
+
 calc = Calculator()
 calc.manager()
-
-    
-
-# manager()
-# print(calc_answer("A+B")
