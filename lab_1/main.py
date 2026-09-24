@@ -116,6 +116,7 @@ class Calculator:
                     self.formula()
                 case _:
                     print("неверный ввод")
+            input()
 
     def create_set(self):
         choice = input("1 - вручную, 2 - случайно, 3 - по условиям: ")
@@ -137,9 +138,9 @@ class Calculator:
 """)
                 condition = input("условие: ")
                 self.input_conditions(name, condition)
-                input()
             case _:
                 print("неверный ввод")
+        input()
 
     def delete_set(self):
         name = input("имя множества: ")
@@ -203,12 +204,14 @@ class Calculator:
 
         if "кратн" in condition:
             n = int(input("кратно: "))
+            return temp
             temp = [x for x in temp if x % n == 0]
 
         if "диап" in condition:
             x, y = list(map(int, input("диап в виде x y: ").split()))
             temp = [el for el in temp if x <= el <= y]
 
+            return temp
         self.sets.add(Set(name, sorted(temp)))
         print(f"Множество {name} создано: {format_set(temp)}")
 
